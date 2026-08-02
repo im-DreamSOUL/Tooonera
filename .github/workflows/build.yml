@@ -24,8 +24,19 @@ jobs:
           mv App app
         fi
 
-    - name: Build APK with Gradle
-      run: gradle assembleDebug
+    - name: Download and Setup Gradle 8.5
+      run: |
+        wget https://services.gradle.org/distributions/gradle-8.5-bin.zip
+        unzip gradle-8.5-bin.zip
+        echo "$PWD/gradle-8.5/bin" >> $GITHUB_PATH
+
+    - name: Create Gradle Wrapper
+      run: |
+        gradle wrapper --gradle-version 8.5
+        chmod +x gradlew
+
+    - name: Build APK with Gradle Wrapper
+      run: ./gradlew assembleDebug
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
