@@ -18,87 +18,13 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Setup Project Structure & Build Files
-      run: |
-        mkdir -p src/main
-        
-        if [ ! -f "src/main/AndroidManifest.xml" ]; then
-          cat << 'EOF' > src/main/AndroidManifest.xml
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.tooonera.app">
-    <application
-        android:allowBackup="true"
-        android:label="Tooonera"
-        android:supportsRtl="true">
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-    </application>
-</manifest>
-EOF
-        fi
-
-        rm -f build.gradle
-        cat << 'EOF' > build.gradle
-        buildscript {
-            repositories {
-                google()
-                mavenCentral()
-            }
-            dependencies {
-                classpath 'com.android.tools.build:gradle:8.1.0'
-            }
-        }
-
-        allprojects {
-            repositories {
-                google()
-                mavenCentral()
-            }
-        }
-        EOF
-
-        # Create local app-level build file if missing or append plugin correctly
-        if [ ! -f "settings.gradle" ]; then
-            echo "include ':app'" > settings.gradle
-            mkdir -p app
-            mv src app/ 2>/dev/null || true
-            cat << 'EOF' > app/build.gradle
-            plugins {
-                id 'com.android.application'
-            }
-            android {
-                namespace 'com.tooonera.app'
-                compileSdk 34
-                defaultConfig {
-                    applicationId "com.tooonera.app"
-                    minSdk 24
-                    targetSdk 34
-                    versionCode 1
-                    versionName "1.0"
-                }
-            }
-EOF
-        else
-            if ! grep -q "com.android.application" build.gradle; then
-                echo "apply plugin: 'com.android.application'" >> build.gradle
-            fi
-        fi
-
-    - name: Download and Setup Gradle 8.5
-      run: |
-        wget -q https://services.gradle.org/distributions/gradle-8.5-bin.zip
-        unzip -q gradle-8.5-bin.zip
-        echo "$PWD/gradle-8.5/bin" >> $GITHUB_PATH
+    - name: Setup Gradle 8.5
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: '8.5'
 
     - name: Build APK
-      run: |
-        gradle assembleDebug
+      run: gradle assembleDebug
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
