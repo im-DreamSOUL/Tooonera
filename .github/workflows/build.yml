@@ -18,9 +18,13 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Safely Apply Android Plugin
+    - name: Fix Conflicting Clean Task & Apply Plugin
       run: |
         if [ -f "build.gradle" ]; then
+          # Remove existing custom clean task block to prevent collision with Android plugin
+          sed -i '/task clean/,/\}/d' build.gradle
+          
+          # Apply Android application plugin if not already present
           if ! grep -q "com.android.application" build.gradle; then
             echo "apply plugin: 'com.android.application'" >> build.gradle
           fi
