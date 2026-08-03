@@ -18,23 +18,10 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Fix App Directory, Settings and Build Gradle
+    - name: Fix App Directory Case
       run: |
         if [ -d "App" ] && [ ! -d "app" ]; then
           mv App app
-        fi
-        if [ ! -f "settings.gradle" ]; then
-          echo "include ':app'" > settings.gradle
-        else
-          if ! grep -q ":app" settings.gradle; then
-            echo "include ':app'" >> settings.gradle
-          fi
-        fi
-        # Ensure app plugin exists in app/build.gradle
-        if [ -f "app/build.gradle" ]; then
-          if ! grep -q "com.android.application" app/build.gradle; then
-            sed -i "1i plugins { id 'com.android.application' }" app/build.gradle
-          fi
         fi
 
     - name: Download and Setup Gradle 8.5
@@ -43,12 +30,16 @@ jobs:
         unzip -q gradle-8.5-bin.zip
         echo "$PWD/gradle-8.5/bin" >> $GITHUB_PATH
 
-    - name: Build APK with Gradle
-      run: |
-        gradle :app:assembleDebug
+    - name: List Tasks for Debugging
+      run: gradle tasks --all
+
+    - name: Build APK
+      run: gradle assembleDebug
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: app-debug
-        path: app/build/outputs/apk/debug/app-debug.apk
+        path: |
+          build/outputs/apk/debug/*.apk
+          app/build/outputs/apk/debug/*.apk
