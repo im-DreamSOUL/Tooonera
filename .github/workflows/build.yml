@@ -18,10 +18,22 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Fix App Directory Case
+    - name: Fix Project Structure and Gradle File
       run: |
         if [ -d "App" ] && [ ! -d "app" ]; then
           mv App app
+        fi
+        
+        # Ensure settings.gradle exists
+        if [ ! -f "settings.gradle" ]; then
+          echo "include ':app'" > settings.gradle
+        fi
+
+        # Ensure app/build.gradle has the android application plugin
+        if [ -f "app/build.gradle" ]; then
+          if ! grep -q "com.android.application" app/build.gradle; then
+            echo "plugins { id 'com.android.application' }" | cat - app/build.gradle > temp && mv temp app/build.gradle
+          fi
         fi
 
     - name: Download and Setup Gradle 8.5
@@ -30,10 +42,7 @@ jobs:
         unzip -q gradle-8.5-bin.zip
         echo "$PWD/gradle-8.5/bin" >> $GITHUB_PATH
 
-    - name: Show Tasks to Find Correct Target
-      run: gradle tasks
-
-    - name: Build APK from App Directory
+    - name: Build APK
       run: |
         cd app
         gradle assembleDebug
