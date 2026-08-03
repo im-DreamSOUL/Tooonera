@@ -18,16 +18,12 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Fix Root Build Gradle Plugin Order
+    - name: Safely Apply Android Plugin
       run: |
         if [ -f "build.gradle" ]; then
           if ! grep -q "com.android.application" build.gradle; then
-            # Insert plugins block right after buildscript block or at the top if buildscript is absent
-            if grep -q "buildscript" build.gradle; then
-              awk '/buildscript\s*\{/,/\}/ {print; if($0=="}") {print "plugins { id '\''com.android.application'\'' }"; next}} 1' build.gradle > temp && mv temp build.gradle
-            else
-              sed -i "1i plugins { id 'com.android.application' }" build.gradle
-            fi
+            # Using traditional Groovy apply plugin which never conflicts with buildscript order
+            echo "apply plugin: 'com.android.application'" >> build.gradle
           fi
         else
           echo "Error: build.gradle not found in root!"
