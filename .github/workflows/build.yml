@@ -18,11 +18,16 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Ensure Root Build Gradle Has Plugin
+    - name: Fix Root Build Gradle Plugin Order
       run: |
         if [ -f "build.gradle" ]; then
           if ! grep -q "com.android.application" build.gradle; then
-            sed -i "1i plugins { id 'com.android.application' }" build.gradle
+            # Insert plugins block right after buildscript block or at the top if buildscript is absent
+            if grep -q "buildscript" build.gradle; then
+              awk '/buildscript\s*\{/,/\}/ {print; if($0=="}") {print "plugins { id '\''com.android.application'\'' }"; next}} 1' build.gradle > temp && mv temp build.gradle
+            else
+              sed -i "1i plugins { id 'com.android.application' }" build.gradle
+            fi
           fi
         else
           echo "Error: build.gradle not found in root!"
