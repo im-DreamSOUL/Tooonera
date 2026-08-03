@@ -18,24 +18,49 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Clean and Fix Build Gradle via Python
+    - name: Replace With Fresh Clean Build Gradle
       run: |
-        python3 -c "
-        with open('build.gradle', 'r') as f:
-            content = f.read()
+        # Delete old messy build.gradle and create a clean standard one
+        rm -f build.gradle
+        
+        cat << 'EOF' > build.gradle
+        buildscript {
+            repositories {
+                google()
+                mavenCentral()
+            }
+            dependencies {
+                classpath 'com.android.tools.build:gradle:8.1.0'
+            }
+        }
 
-        # Remove existing clean task definitions safely
-        import re
-        content = re.sub(r'task\s+clean\s*\(.*?\)\s*\{.*?\}', '', content, flags=re.DOTALL)
-        content = re.sub(r'task\s+clean\s*\{.*?\}', '', content, flags=re.DOTALL)
+        allprojects {
+            repositories {
+                google()
+                mavenCentral()
+            }
+        }
 
-        # Append plugin if missing
-        if 'com.android.application' not in content:
-            content += \"\napply plugin: 'com.android.application'\n\"
+        apply plugin: 'com.android.application'
 
-        with open('build.gradle', 'w') as f:
-            f.write(content)
-        "
+        android {
+            namespace 'com.tooonera.app'
+            compileSdk 34
+
+            defaultConfig {
+                applicationId "com.tooonera.app"
+                minSdk 24
+                targetSdk 34
+                versionCode 1
+                versionName "1.0"
+            }
+        }
+        EOF
+
+        # Ensure settings.gradle exists
+        if [ ! -f "settings.gradle" ]; then
+            echo "rootProject.name = 'Tooonera'" > settings.gradle
+        fi
 
     - name: Download and Setup Gradle 8.13
       run: |
