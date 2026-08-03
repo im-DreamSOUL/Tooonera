@@ -18,7 +18,7 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Fix App Directory Case and Settings
+    - name: Fix App Directory, Settings and Build Gradle
       run: |
         if [ -d "App" ] && [ ! -d "app" ]; then
           mv App app
@@ -28,6 +28,12 @@ jobs:
         else
           if ! grep -q ":app" settings.gradle; then
             echo "include ':app'" >> settings.gradle
+          fi
+        fi
+        # Ensure app plugin exists in app/build.gradle
+        if [ -f "app/build.gradle" ]; then
+          if ! grep -q "com.android.application" app/build.gradle; then
+            sed -i "1i plugins { id 'com.android.application' }" app/build.gradle
           fi
         fi
 
