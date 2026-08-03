@@ -18,22 +18,14 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Force Fix Project Structure & Gradle Config
+    - name: Ensure Root Build Gradle Has Plugin
       run: |
-        if [ -d "App" ] && [ ! -d "app" ]; then
-          mv App app
-        fi
-        
-        # Ensure settings.gradle exists and includes app
-        echo "include ':app'" > settings.gradle
-
-        # Force inject android application plugin into app/build.gradle if missing
-        if [ -f "app/build.gradle" ]; then
-          if ! grep -q "com.android.application" app/build.gradle; then
-            sed -i "1i plugins { id 'com.android.application' }" app/build.gradle
+        if [ -f "build.gradle" ]; then
+          if ! grep -q "com.android.application" build.gradle; then
+            sed -i "1i plugins { id 'com.android.application' }" build.gradle
           fi
         else
-          echo "Error: app/build.gradle not found!"
+          echo "Error: build.gradle not found in root!"
           exit 1
         fi
 
@@ -51,4 +43,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: app-debug
-        path: app/build/outputs/apk/debug/app-debug.apk
+        path: build/outputs/apk/debug/*.apk
