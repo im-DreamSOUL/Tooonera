@@ -18,76 +18,16 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Force Create Correct Android Project Structure
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew || true
+
+    - name: Build with Gradle Wrapper
       run: |
-        # Ensure settings.gradle exists and points to root or app
-        echo "rootProject.name = 'Tooonera'" > settings.gradle
-
-        # Force write a standard root build.gradle with android plugin applied directly
-        cat << 'EOF' > build.gradle
-        buildscript {
-            repositories {
-                google()
-                mavenCentral()
-            }
-            dependencies {
-                classpath 'com.android.tools.build:gradle:8.1.0'
-            }
-        }
-
-        allprojects {
-            repositories {
-                google()
-                mavenCentral()
-            }
-        }
-
-        apply plugin: 'com.android.application'
-
-        android {
-            namespace 'com.tooonera.app'
-            compileSdk 34
-
-            defaultConfig {
-                applicationId "com.tooonera.app"
-                minSdk 24
-                targetSdk 34
-                versionCode 1
-                versionName "1.0"
-            }
-        }
-        EOF
-
-        # Ensure AndroidManifest exists so build doesn't crash on path
-        mkdir -p src/main
-        if [ ! -f "src/main/AndroidManifest.xml" ]; then
-            cat << 'EOF' > src/main/AndroidManifest.xml
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.tooonera.app">
-    <application
-        android:allowBackup="true"
-        android:label="Tooonera"
-        android:supportsRtl="true">
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-    </application>
-</manifest>
-EOF
+        if [ -f "./gradlew" ]; then
+          ./gradlew assembleDebug --no-daemon
+        else
+          gradle assembleDebug --no-daemon
         fi
-
-    - name: Setup Gradle 8.5
-      uses: gradle/actions/setup-gradle@v3
-      with:
-        gradle-version: '8.5'
-
-    - name: Build APK
-      run: gradle assembleDebug
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
@@ -95,3 +35,4 @@ EOF
         name: app-debug
         path: |
           build/outputs/apk/debug/*.apk
+          app/build/outputs/apk/debug/*.apk
