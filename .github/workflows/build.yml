@@ -22,7 +22,6 @@ jobs:
       run: |
         if [ -f "build.gradle" ]; then
           if ! grep -q "com.android.application" build.gradle; then
-            # Using traditional Groovy apply plugin which never conflicts with buildscript order
             echo "apply plugin: 'com.android.application'" >> build.gradle
           fi
         else
@@ -30,11 +29,11 @@ jobs:
           exit 1
         fi
 
-    - name: Download and Setup Gradle 8.5
+    - name: Download and Setup Gradle 8.13
       run: |
-        wget -q https://services.gradle.org/distributions/gradle-8.5-bin.zip
-        unzip -q gradle-8.5-bin.zip
-        echo "$PWD/gradle-8.5/bin" >> $GITHUB_PATH
+        wget -q https://services.gradle.org/distributions/gradle-8.13-bin.zip
+        unzip -q gradle-8.13-bin.zip
+        echo "$PWD/gradle-8.13/bin" >> $GITHUB_PATH
 
     - name: Build APK
       run: |
