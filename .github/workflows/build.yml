@@ -18,11 +18,40 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Replace With Fresh Clean Build Gradle
+    - name: Fix Source Directories and Manifest
       run: |
-        # Delete old messy build.gradle and create a clean standard one
-        rm -f build.gradle
+        # Ensure standard Android source structure exists
+        mkdir -p src/main
         
+        # If AndroidManifest.xml is placed elsewhere, find and move it, or create a basic one
+        if [ ! -f "src/main/AndroidManifest.xml" ]; then
+          if [ -f "AndroidManifest.xml" ]; then
+            mv AndroidManifest.xml src/main/
+          else
+            # Create a fallback manifest if missing entirely
+            cat << 'EOF' > src/main/AndroidManifest.xml
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.tooonera.app">
+    <application
+        android:allowBackup="true"
+        android:label="Tooonera"
+        android:supportsRtl="true">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
+EOF
+          fi
+        fi
+
+        # Replace build.gradle with clean standard configuration
+        rm -f build.gradle
         cat << 'EOF' > build.gradle
         buildscript {
             repositories {
@@ -57,7 +86,6 @@ jobs:
         }
         EOF
 
-        # Ensure settings.gradle exists
         if [ ! -f "settings.gradle" ]; then
             echo "rootProject.name = 'Tooonera'" > settings.gradle
         fi
