@@ -18,18 +18,12 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Fix Source Directories and Manifest
+    - name: Setup Project Structure & Build Files
       run: |
-        # Ensure standard Android source structure exists
         mkdir -p src/main
         
-        # If AndroidManifest.xml is placed elsewhere, find and move it, or create a basic one
         if [ ! -f "src/main/AndroidManifest.xml" ]; then
-          if [ -f "AndroidManifest.xml" ]; then
-            mv AndroidManifest.xml src/main/
-          else
-            # Create a fallback manifest if missing entirely
-            cat << 'EOF' > src/main/AndroidManifest.xml
+          cat << 'EOF' > src/main/AndroidManifest.xml
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.tooonera.app">
     <application
@@ -47,10 +41,8 @@ jobs:
     </application>
 </manifest>
 EOF
-          fi
         fi
 
-        # Replace build.gradle with clean standard configuration
         rm -f build.gradle
         cat << 'EOF' > build.gradle
         buildscript {
@@ -69,32 +61,40 @@ EOF
                 mavenCentral()
             }
         }
-
-        apply plugin: 'com.android.application'
-
-        android {
-            namespace 'com.tooonera.app'
-            compileSdk 34
-
-            defaultConfig {
-                applicationId "com.tooonera.app"
-                minSdk 24
-                targetSdk 34
-                versionCode 1
-                versionName "1.0"
-            }
-        }
         EOF
 
+        # Create local app-level build file if missing or append plugin correctly
         if [ ! -f "settings.gradle" ]; then
-            echo "rootProject.name = 'Tooonera'" > settings.gradle
+            echo "include ':app'" > settings.gradle
+            mkdir -p app
+            mv src app/ 2>/dev/null || true
+            cat << 'EOF' > app/build.gradle
+            plugins {
+                id 'com.android.application'
+            }
+            android {
+                namespace 'com.tooonera.app'
+                compileSdk 34
+                defaultConfig {
+                    applicationId "com.tooonera.app"
+                    minSdk 24
+                    targetSdk 34
+                    versionCode 1
+                    versionName "1.0"
+                }
+            }
+EOF
+        else
+            if ! grep -q "com.android.application" build.gradle; then
+                echo "apply plugin: 'com.android.application'" >> build.gradle
+            fi
         fi
 
-    - name: Download and Setup Gradle 8.13
+    - name: Download and Setup Gradle 8.5
       run: |
-        wget -q https://services.gradle.org/distributions/gradle-8.13-bin.zip
-        unzip -q gradle-8.13-bin.zip
-        echo "$PWD/gradle-8.13/bin" >> $GITHUB_PATH
+        wget -q https://services.gradle.org/distributions/gradle-8.5-bin.zip
+        unzip -q gradle-8.5-bin.zip
+        echo "$PWD/gradle-8.5/bin" >> $GITHUB_PATH
 
     - name: Build APK
       run: |
@@ -104,4 +104,6 @@ EOF
       uses: actions/upload-artifact@v4
       with:
         name: app-debug
-        path: build/outputs/apk/debug/*.apk
+        path: |
+          build/outputs/apk/debug/*.apk
+          app/build/outputs/apk/debug/*.apk
