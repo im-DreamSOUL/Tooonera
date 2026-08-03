@@ -30,16 +30,16 @@ jobs:
         unzip -q gradle-8.5-bin.zip
         echo "$PWD/gradle-8.5/bin" >> $GITHUB_PATH
 
-    - name: List Tasks for Debugging
-      run: gradle tasks --all
+    - name: Show Tasks to Find Correct Target
+      run: gradle tasks
 
-    - name: Build APK
-      run: gradle assembleDebug
+    - name: Build APK from App Directory
+      run: |
+        cd app
+        gradle assembleDebug
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: app-debug
-        path: |
-          build/outputs/apk/debug/*.apk
-          app/build/outputs/apk/debug/*.apk
+        path: app/build/outputs/apk/debug/app-debug.apk
